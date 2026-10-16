@@ -70,11 +70,39 @@ export function ScopeBanner({ onExplore }) {
   </div>;
 }
 
+// Public files use fixed names so replacing a demo requires no source changes.
+function AddonMedia({ module, onPreview }) {
+  const [failed, setFailed] = useState(false);
+  const poster = `${import.meta.env.BASE_URL}addon-previews/${module.id}.png`;
+  if (failed) {
+    const image = <img src={poster} alt={module.alt} loading="lazy" />;
+    return onPreview
+      ? <button className="scope-photo-fallback" onClick={onPreview} aria-label={`View ${module.title} concept preview`}>{image}</button>
+      : image;
+  }
+  return <video
+    className="scope-demo-video"
+    src={`${import.meta.env.BASE_URL}addon-videos/${module.id}.mp4`}
+    poster={poster}
+    controls
+    playsInline
+    preload="metadata"
+    aria-label={`${module.title} demo video`}
+    onError={() => setFailed(true)}
+    onPlay={(event) => {
+      document.querySelectorAll(".scope-demo-video").forEach((video) => {
+        if (video !== event.currentTarget) video.pause();
+      });
+    }}
+  >Your browser does not support video playback.</video>;
+}
+
 function PreviewDialog({ module, onClose }) {
   const ref = useRef(null);
   const [overlay, setOverlay] = useState(false);
   useEffect(() => {
     const previous = document.activeElement;
+    document.querySelectorAll(".scope-demo-video").forEach((video) => video.pause());
     ref.current.showModal();
     return () => { previous?.focus(); };
   }, []);
@@ -83,8 +111,8 @@ function PreviewDialog({ module, onClose }) {
     <div className="scope-dialog-inner">
       <header><span className="scope-eyebrow"><Icon size={16} /> CONCEPT PREVIEW</span><button className="scope-icon-button" aria-label="Close preview" onClick={onClose} autoFocus><X size={21} /></button></header>
       <div className={`scope-preview-image scope-scene-${module.id}`}>
-        <img src={`/addon-previews/${module.id}.png`} alt={module.alt} />
-        <span className="scope-image-label">Illustrative image · proposed add-on</span>
+        <AddonMedia module={module} />
+        <span className="scope-image-label">Demo preview · proposed add-on</span>
         {overlay && <div className={`scope-concept-overlay scope-overlay-${module.id}`} aria-label="Illustrative overlay, not a detection result"><span>{module.overlay}</span></div>}
       </div>
       <div className="scope-dialog-body">
@@ -124,10 +152,10 @@ export default function ScopePage({ onNavigate }) {
 
     <section aria-labelledby="scope-addons-title">
       <div className="scope-section-heading scope-addons-heading"><div><span className="scope-eyebrow">A LOOK AHEAD</span><h2 id="scope-addons-title">More possibilities for your mill</h2><p>Five proposed extensions. Explore the concept behind each one.</p></div><span className="scope-proposed-badge"><Sparkles size={15} /> Future add-ons</span></div>
-      <div className="scope-preview-notice"><Eye size={19} /><p><strong>A preview of what could come next.</strong> These images explain possible add-ons. These features are not active, and no safety detection or weight measurement runs here.</p></div>
+      <div className="scope-preview-notice"><Eye size={19} /><p><strong>A preview of what could come next.</strong> These photo and video previews explain possible add-ons. These features are not active, and no safety detection or weight measurement runs here.</p></div>
       <div className="scope-filter-row"><div className="scope-filters" role="group" aria-label="Filter proposed add-ons">{["All add-ons", "Safety", "Operations"].map((item) => <button key={item} aria-pressed={category===item} className={category===item ? "selected" : ""} onClick={() => setCategory(item)}>{item}<span>{item==="All add-ons" ? modules.length : modules.filter((m)=>m.category===item).length}</span></button>)}</div><span className="scope-result-count" aria-live="polite">{visible.length} concepts</span></div>
       <div className="scope-addon-grid">{visible.map((module) => { const Icon=module.icon; return <article className="scope-addon-card" key={module.id} style={{"--module-color":module.color}}>
-        <button className="scope-card-image" onClick={() => setSelected(module)} aria-label={`View ${module.title} concept preview`}><img src={`/addon-previews/${module.id}.png`} alt={module.alt} loading="lazy" /><span className="scope-card-image-shade" /><span className="scope-card-category"><Icon size={14} />{module.category}</span><span className="scope-card-view"><Eye size={15} /> View concept</span></button>
+        <div className="scope-card-image"><AddonMedia module={module} onPreview={() => setSelected(module)} /><span className="scope-card-category"><Icon size={14} />{module.category}</span><button className="scope-card-view" onClick={() => setSelected(module)} aria-label={`Open ${module.title} demo preview`}><Eye size={15} /> View concept</button></div>
         <div className="scope-addon-body"><span className="scope-card-status">PROPOSED ADD-ON</span><h3>{module.title}</h3><p>{module.description}</p><div className="scope-addon-footer"><span>{module.label}</span><button onClick={() => setSelected(module)} aria-label={`Explore ${module.title}`}><ArrowUpRight size={19} /></button></div></div>
       </article>; })}</div>
     </section>

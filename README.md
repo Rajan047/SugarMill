@@ -56,3 +56,7 @@ in this export. Do not route API requests to the SPA index page.
 This export contains no Python code, model checkpoints, datasets, or virtual
 environment. Keep `node_modules`, `.env*`, and generated `dist` out of source
 control. Only publish the static `dist` contents when doing a manual deployment.
+
+## Add-on demo videos
+
+Add your MP4 files to `public/addon-videos/`. See [video instructions](public/addon-videos/README.md) for the five exact filenames. Missing videos fall back to photos.
